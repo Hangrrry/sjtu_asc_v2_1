@@ -249,7 +249,7 @@ int main(int argc, char** argv) {
 	time_t timep;
 	time_t timep2;
 	time_t timep3;
-	
+	  
 	while (ros::ok()){
 	std::cout<<"waiting to enter  .current="<<current_state.mode<<"\n";
 		ros::spinOnce();
