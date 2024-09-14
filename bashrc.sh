@@ -177,3 +177,4 @@ alias cmosh="cd /home/amov/catkin_ws/src/mission_offboard/src;code ./mo.sh"
 alias cmbsh="cd /home/amov/catkin_ws/src/mission_offboard/src;codbe ./mb.sh"
 alias pr="rostopic echo /mavros/mission/reached |tee  recordpr`date  +_%Y_%m_%d_%H_%M_%S`.txt"
 alias gs="gnome-session-properties"
+source /home/amov/catkin_ws/devel/setup.bash;
