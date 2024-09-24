@@ -137,7 +137,7 @@ else
 fi
 unset __conda_setup
 # <<< conda initialize <<<
-export PATH="/home/amov/anaconda3/bin:$PATH"
+# export PATH="/home/amov/anaconda3/bin:$PATH"  # commented out by conda initialize
 
 alias ca="conda activate"
 alias cl="conda list"
@@ -150,7 +150,7 @@ export PATH=$PATH:/usr/bin/python
 alias et="rostopic echo"
 alias lt="rostopic list"
 alias cm="cd catkin_ws/;catkin_make"
-alias px4="roslaunch mavros px4.launch fcu_url:=serial:///dev/ttyTHS1:921600 gcs_url:=udp://@192.168.0.0 "
+alias px4="roslaunch mavros px4.launch"
 alias AA="rosrun A A |tee  record`date  +_%Y_%m_%d_%H_%M_%S`.txt"
 alias codeA="roscd A; cd src; code A.cpp"
 alias ss="cd ~;source .bashrc"
@@ -174,7 +174,12 @@ alias mosh="cd /home/amov/catkin_ws/src/mission_offboard/src;./mo.sh"
 alias mbsh="cd /home/amov/catkin_ws/src/mission_offboard/src;./mb.sh"
 alias cpx4sh="cd /home/amov/catkin_ws/src/mission_offboard/src;code ./px4.sh"
 alias cmosh="cd /home/amov/catkin_ws/src/mission_offboard/src;code ./mo.sh"
-alias cmbsh="cd /home/amov/catkin_ws/src/mission_offboard/src;codbe ./mb.sh"
+alias cmbsh="cd /home/amov/catkin_ws/src/mission_offboard/src;code ./mb.sh"
 alias pr="rostopic echo /mavros/mission/reached |tee  recordpr`date  +_%Y_%m_%d_%H_%M_%S`.txt"
 alias gs="gnome-session-properties"
+alias cvsh="cd ~/catkin_ws/src/mission_offboard/src;code vision.sh"
+alias vsh="cd ~/catkin_ws/src/mission_offboard/src;./vision.sh"
+alias np="cd /home/amov/tst/src/vision_pose/scripts;conda activate yolov8;python new_pos.py"
+alias codenp="cd /home/amov/tst/src/vision_pose/scripts;conda activate yolov8; code new_pos.py"
+
 source /home/amov/catkin_ws/devel/setup.bash;
