@@ -39,6 +39,8 @@ mavros_msgs/Thrust.h
 -
 std_msgs/Float64.h
 -
+std_msgs/String.h
+-
 mavros_msgs/WaypointReached.h
 -
 mavros_msgs/RCIn.h
