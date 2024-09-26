@@ -23,6 +23,7 @@
 #include <iostream>
 #include <ctime>
 #include <string>
+#include <map>
 #include <vector>
 #include <serial/serial.h>
 #include <time.h>
@@ -57,6 +58,9 @@ std_msgs::Float64 rel_alt;
 mavros_msgs::VFR_HUD hud;
 mavros_msgs::WaypointReached wp;
 mavros_msgs::RCIn rcin;
+
+geometry_msgs::PoseStamped pose, delt_pose, target;
+float x = -4.8, y = 30.6;
 
 // 回调函数用于更新订阅到的数据，每个回调函数与一个ROS话题相关联，用于接收状态、位置、速度、GPS数据等信息
 void state_sb(const mavros_msgs::State::ConstPtr &msg)
@@ -111,6 +115,36 @@ void rcin_sb(const mavros_msgs::RCIn::ConstPtr &msg)
 {
 	rcin = *msg;
 }
+void final_num_sb(const boost::shared_ptr<const std_msgs::String>& msg)
+{
+	std::map<char, std::string> keyboard_map;
+	keyboard_map['1'] = "Q";
+	keyboard_map['2'] = "W";
+	keyboard_map['3'] = "E";
+	keyboard_map['4'] = "R";
+	keyboard_map['5'] = "T";
+	keyboard_map['6'] = "Y";
+	keyboard_map['7'] = "U";
+	keyboard_map['8'] = "I";
+	keyboard_map['9'] = "O";
+	keyboard_map['0'] = "P";
+	keyboard_map[','] = ",";
+	keyboard_map['['] = "[";
+	keyboard_map[']'] = "]";
+	keyboard_map[' '] = " ";
+
+	std::string port = "/dev/ttyUSB1"; // 根据实际情况修改串口设备号
+	int baudrate = 9600;
+	serial::Serial serialPort(port, baudrate, serial::Timeout::simpleTimeout(1000));
+	const std::string& msg_data = msg->data;
+
+	for(int i = 0; i < msg_data.length(); i++){
+		serialPort.write(keyboard_map[msg_data[i]]);
+	}
+}
+void target_sb(const geometry_msgs::PoseStamped::ConstPtr &msg){
+	pose = *msg;
+}
 
 // 初始化串口，用于与外部设备通信，控制舵机
 std::string port = "/dev/ttyUSB1"; // 根据实际情况修改串口设备号
@@ -125,9 +159,12 @@ bool isFileEmpty(const std::string &filename)
 }
 
 int main(int argc, char **argv)
-{
+{	
+	serialPort.write("@###");
 	serialPort.write("70a");
-	float x = -41.9, y = -9.2;
+	pose.pose.position.x = x;
+	pose.pose.position.y = y;
+	pose.pose.position.z = 20;
 
 	// std::cout << "pose.x: ";
 	// std::cin >> x;
@@ -164,7 +201,7 @@ int main(int argc, char **argv)
 	// 测试舵机臂偏转角度
 	// servoservo
 	//  for(int i=1;i<=30;i++)
-	//  	serialPort.write("0a");
+	//  	serialPort.write("0\n");
 	// serialPort.write("70\n");
 	// return 0;
 
@@ -191,11 +228,12 @@ int main(int argc, char **argv)
 	ros::Subscriber plane_mav_alt = nh.subscribe<mavros_msgs::Altitude>("/mavros/altitude", 10, mav_alt_sb);
 	ros::Subscriber plane_rel_alt = nh.subscribe<std_msgs::Float64>("/mavros/global_position/rel_alt", 10, rel_alt_sb);
 	ros::Subscriber plane_hud = nh.subscribe<mavros_msgs::VFR_HUD>("mavros_msgs/VFR_HUD", 10, hud_sb);
+	ros::Subscriber num_sub = nh.subscribe<std_msgs::String>("final_result", 10, final_num_sb);
+	ros::Subscriber target_sub = nh.subscribe<geometry_msgs::PoseStamped>("final_pos", 10, target_sb);
 	ros::Publisher vision_stop_pub = nh.advertise<std_msgs::Float64>("vision_stop_flag", 10);
 	ros::Publisher target_pos_pub = nh.advertise<geometry_msgs::PoseStamped>("/mavros/setpoint_position/local", 10);
+	ros::Publisher send_num_pub=nh.advertise<std_msgs::Float64>("send_topic", 10);
 	ros::Publisher thrust_pub = nh.advertise<mavros_msgs::Thrust>("/mavros/setpoint_attitude/thrust", 10);
-	ros::Publisher send_pub = nh.advertise<std_msgs::Float64>("send_topic", 10);
-
 	ros::ServiceClient arming_client = nh.serviceClient<mavros_msgs::CommandBool>("/mavros/cmd/arming");
 	ros::ServiceClient set_mode_client = nh.serviceClient<mavros_msgs::SetMode>("/mavros/set_mode");
 	ros::Rate rate(60.0);
@@ -203,20 +241,21 @@ int main(int argc, char **argv)
 	rate.sleep();
 
 	// 姿态高度
-	geometry_msgs::PoseStamped pose, delt_pose, target;
 	mavros_msgs::Thrust thrust;
 
 	// egeg
-	pose.pose.position.x = x;
-	pose.pose.position.y = y;
-	pose.pose.position.z = 20;
 	int i2 = 0;
 	delt_pose.pose.position.x = local_pos.pose.position.x - global_pos_odom.pose.pose.position.x;
 	delt_pose.pose.position.y = local_pos.pose.position.y - global_pos_odom.pose.pose.position.y;
 	delt_pose.pose.position.z = local_pos.pose.position.z - global_pos_odom.pose.pose.position.z;
-
+	// int cnt=0;
+	std::cout<<"finish writing\n";
 	while (ros::ok() && !current_state.connected)
 	{
+	// serialPort.write("Not Connected\n");
+// cnt++;
+// serialPort.write(std::to_string(cnt));
+// serialPort.write("\n");
 		ROS_INFO("not connected");
 		ros::spinOnce();
 		rate.sleep();
@@ -245,12 +284,17 @@ int main(int argc, char **argv)
 	time_t timep;
 	time_t timep2;
 	time_t timep3;
-
+	int arco_num=0;
 	while (ros::ok())
 	{
 		std::cout << "waiting to enter  .current=" << current_state.mode << "\n";
 		ros::spinOnce();
+		if (arco_num<1){
+			serialPort.write("ARCO");
 
+		}
+
+	arco_num++;
 		if (current_state.mode == "ACRO")
 		{
 			break;
@@ -350,7 +394,7 @@ int main(int argc, char **argv)
 
 			time(&timep2);
 
-			if (wp.wp_seq >= 5)
+			if (wp.wp_seq == 5)
 			{
 				std_msgs::Float64 vision_flag;
 				vision_flag.data = 666.666;
@@ -377,7 +421,7 @@ int main(int argc, char **argv)
 			distance = sqrt((local_pos.pose.position.x - target.pose.position.x) * (local_pos.pose.position.x - target.pose.position.x) + (local_pos.pose.position.y - target.pose.position.y) * (local_pos.pose.position.y - target.pose.position.y));
 			time(&timep3);
 
-			if (distance > 37)
+			if (distance > 33)
 			{
 				data << "now distance >37\n";
 				target_pos_pub.publish(target);
@@ -434,8 +478,8 @@ int main(int argc, char **argv)
 			distance = sqrt((local_pos.pose.position.x - target.pose.position.x) * (local_pos.pose.position.x - target.pose.position.x) + (local_pos.pose.position.y - target.pose.position.y) * (local_pos.pose.position.y - target.pose.position.y));
 			ROS_INFO("mission mode22222");
 			std_msgs::Float64 send_flag;
-			send_flag.data=777.777;
-			send_pub.publish(send_flag);
+			send_flag.data = 777.777;
+			send_num_pub.publish(send_flag);
 			break;
 		}
 
