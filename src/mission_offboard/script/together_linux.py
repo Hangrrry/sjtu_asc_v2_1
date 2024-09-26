@@ -516,7 +516,7 @@ if __name__ == "__main__":
             # print("frame is read")
             end_time = time.time()
             if success == True:
-                if end_time - start_time > 180:
+                if end_time - start_time > 120:
                     print("code exit by time")
                     break
                 if wp == 5:
